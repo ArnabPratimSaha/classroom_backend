@@ -29,9 +29,6 @@ connectMongo();
 const auth=require('./routes/authentication/authentication');
 const classroom=require('./routes/classroom/classroom');
 const user=require('./routes/user/user');
-const { UserModel } = require('./mongodb/user');
-const { urlencoded } = require('express');
-const { ClassModel } = require('./mongodb/classroom');
 app.use('/auth',auth);
 app.use('/class',classroom);
 app.use('/user',user)

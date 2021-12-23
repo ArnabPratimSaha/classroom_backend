@@ -1,7 +1,9 @@
 const jwt = require('jsonwebtoken');
 const { UserModel } = require('../mongodb/user');
-
-//required headers id-accesstoken-refreshtoken
+//this validates the user if it is in the database or not
+//takes the access token and refreshes it if necessery
+//required headers [id,accesstoken,refreshtoken]
+//ADDS [user,accesstoken,refreshtoken] to req(accessed as req.user from next middleware)
 const validate = async (req, res, next) => {
     try {
         const accesstoken = req.headers.accesstoken;

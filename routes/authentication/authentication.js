@@ -4,9 +4,8 @@ const Router=require('express').Router();
 const { v4: uuidv4 } = require('uuid');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const {validate}=require('../../middleware/validation');
 Router.get('/',passport.authenticate('google', { scope: ['profile','email'] }));
-
+//signup or login the user
 Router.get('/callback',passport.authenticate('google', { failureRedirect: '/login' }),async (req, res) => {
     try {
       const user=await UserModel.findOne({email:req.user.email});
