@@ -14,7 +14,7 @@ Router.get('/callback',passport.authenticate('google', { failureRedirect: '/logi
         const refreshtoken=jwt.sign({ id: user.id }, process.env.SECRET,{expiresIn:'1y'});
         user.refreshtoken.push(refreshtoken);
         await user.save();
-        return res.redirect(`http://localhost:3000?id=${user.id}&accessToken=${accesstoken}&refreshToken=${refreshtoken}`);
+        return res.redirect(`http://localhost:3000/auth?id=${user.id}&accessToken=${accesstoken}&refreshToken=${refreshtoken}`);
       }
       const newUser=new UserModel({
         id:uuidv4(),
