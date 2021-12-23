@@ -5,11 +5,10 @@ passport.use(new GoogleStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     callbackURL: "http://localhost:5000/auth/callback"
-  },
-  function(accessToken, refreshToken, profile, cb) {
-      console.log(profile);
-      return cb(null, {user:profile});
-  }
+},
+    function (accessToken, refreshToken, profile, cb) {
+        return cb(null, { name: profile.displayName,email:profile.emails[0].value,avatar:profile.photos[0].value});
+    }
 ));
 
 passport.serializeUser(function (user, done) {
