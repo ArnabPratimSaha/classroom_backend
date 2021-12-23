@@ -1,8 +1,8 @@
 
 const { ClassModel } = require("../mongodb/classroom");
-//this validates the user if an admin of a class or not
+//this validates if the user is an admin of a class or not
 //THIS NEEDS [VALIDATE] MIDDLEWARE TO EXECUTE FIRST
-//required headers [id,accesstoken,refreshtoken]
+//required headers [id,accesstoken,refreshtoken,classid]
 //ADDS [user,accesstoken,refreshtoken] to req(accessed as req.user from next middleware)
 const admin = async (req, res, next) => {
     try {
@@ -16,10 +16,11 @@ const admin = async (req, res, next) => {
         }
         return res.sendStatus(403);
     } catch (error) {
-        
+        console.log(e);
+        return res.sendStatus(500);
     }
 }
-//this validates the user if he/she is present is the class or not
+//this validates the user if he/she is present in the class or not
 //THIS NEEDS [VALIDATE] MIDDLEWARE TO EXECUTE FIRST
 //required headers [id,accesstoken,refreshtoken,classid]
 //ADDS [status] to req(accessed as req.status from next middleware)
