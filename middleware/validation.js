@@ -3,7 +3,7 @@ const { UserModel } = require('../mongodb/user');
 //this validates the user if it is in the database or not
 //takes the access token and refreshes it if necessery
 //required headers [id,accesstoken,refreshtoken]
-//ADDS [user,accesstoken,refreshtoken] to req(accessed as req.user from next middleware)
+//adds [user,accesstoken,refreshtoken] to req(accessed as req.user from next middleware)
 const validate = async (req, res, next) => {
     try {
         const accesstoken = req.headers.accesstoken;
