@@ -3,8 +3,10 @@ const { validate } = require("../../middleware/validation");
 const { UserModel } = require("../../mongodb/user");
 const Router = require("express").Router();
 
-//required headers id-accesstoken-refreshtoken
-//verify and get user ifo
+//get all the info of the user
+//required headers [id,accesstoken,refreshtoken,q(if empty then returns every info,keywords=['email','name','id','avatar'])]
+//required body [name,description(not required)]
+//used [VALIDATE] middleware(see those middleware for full info)
 Router.get('/info', validate, async (req, res) => {
     try {
         const user = req.user;

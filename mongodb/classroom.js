@@ -1,13 +1,28 @@
 const mongoose=require('mongoose');
 const { userSchema } = require('./user');
 
+const teacherSchema=new mongoose.Schema({
+    id:{ type:String,required:true,unique:true },
+    role:{type:String,enum:['admin','basic'],default:'basic'},
+    information:{type:Object}
+})
+const studentSchema=new mongoose.Schema({
+    id:{ type:String,required:true,unique:true },
+    information:{type:Object}
+})
+
 const classSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     name: { type: String, required: true },
-    teachers:  [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-    students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+    createdAt : {type:Date,default:()=>new Date()},
+    description: {type:String},
+    teachers :  [teacherSchema],
+    students : [studentSchema],
+    information:{type:Object}
 });
 
 const ClassModel = mongoose.model('Class', classSchema);
+const TeacherModel= mongoose.model('Teacher', teacherSchema);
+const StudentModel= mongoose.model('Student', studentSchema);
 
-module.exports={ClassModel,classSchema};
+module.exports={ClassModel,TeacherModel,StudentModel};
