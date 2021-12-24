@@ -26,12 +26,12 @@ const connectMongo = async() => {
 }
 connectMongo();
 
-const auth=require('./routes/authentication/authentication');
-const classroom=require('./routes/classroom/classroom');
-const user=require('./routes/user/user');
-app.use('/auth',auth);
-app.use('/class',classroom);
-app.use('/user',user)
+const auth = require('./routes/authentication/authentication');
+const classroom = require('./routes/classroom/classroom');
+const user = require('./routes/user/user');
+app.use('/auth', auth);
+app.use('/class', classroom);
+app.use('/user', user)
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
 })

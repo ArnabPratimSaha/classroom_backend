@@ -40,14 +40,10 @@ const status=async (req, res, next) => {
             if (data.teachers.find(e => e.role === 'admin'))
                 status.admin = true;
             req.status = status;
-            next();
-            return;
         }
         if(data.students.find(e => e.id === req.user.id)){
             status.student = true;
             req.status = status;
-            next();
-            return;
         }
         next();
         return;

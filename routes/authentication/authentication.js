@@ -28,7 +28,7 @@ Router.get('/callback',passport.authenticate('google', { failureRedirect: '/logi
       const refreshtoken=jwt.sign({ id: response.id }, process.env.SECRET,{expiresIn:'1y'});
       response.refreshtoken.push(refreshtoken);
       await response.save();
-      return res.redirect(`http://localhost:3000?id=${response.id}&accessToken=${accesstoken}&refreshToken=${refreshtoken}`);
+      return res.redirect(`${process.env.FRONTEND}?id=${response.id}&accessToken=${accesstoken}&refreshToken=${refreshtoken}`);
   } catch (error) {
     console.error(error);
     res.sendStatus(500);
