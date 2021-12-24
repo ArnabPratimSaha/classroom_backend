@@ -42,6 +42,7 @@ const validate = async (req, res, next) => {
         if (error instanceof jwt.JsonWebTokenError) {
             //security breach(user used a malformed jwt)
             try {
+                console.log('4');
                 const id = req.headers.id;
                 const user = await UserModel.findOne({ id: id });
                 if (!user) return res.sendStatus(404);

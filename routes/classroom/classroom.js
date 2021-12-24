@@ -4,6 +4,8 @@ const { v4: uuidv4 } = require('uuid');
 const { TeacherModel, ClassModel, StudentModel } = require("../../mongodb/classroom");
 const { admin, status } = require('../../middleware/role');
 const { InviteModel } = require("../../mongodb/invitelink");
+const { UserModel } = require("../../mongodb/user");
+const { classView } = require("../../middleware/classinfo");
 //create a classroom by an user
 //required headers [id,accesstoken,refreshtoken]
 //required body [name,description(not required)]
@@ -32,6 +34,25 @@ Router.post('/create', validate, async (req, res) => {
         res.sendStatus(500);
     }
 });
+//get information of a classroom by an user (if the user is in the classroom)
+//required headers [id,accesstoken,refreshtoken,classid]
+//used [VALIDATE,STATUS] middleware(see those middleware for full info)
+Router.get('/info', validate, status,classView, async (req, res) => {
+    try {
+        if(!req.headers.q)return res.status(200).json(req.view);
+        const query=req.headers.q.split(' ');
+        var view={teacher:req.view.teacher,student:req.view.student,admin:req.view.admin,requestedPerson:req.view.requestedPerson};
+        query.forEach(e => {
+            if(e==='teacher')view.teachers=req.view.teachers;
+            if(e==='student')view.students=req.view.students;
+        });
+        res.status(200).json(view);
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+})
+
 //create an invite link-can only be created by and admin
 //required headers [id,accesstoken,refreshtoken,expi(default 30 days),type(default student)]
 //used [VALIDATE] middleware(see those middleware for full info)
@@ -90,7 +111,7 @@ Router.post('/invite', validate, status, async (req, res) => {
             return res.sendStatus(404);
         }
         if (req.status) {
-            return res.sendStatus(200).json({ status: 'failed', reason: 'You are already a part of this class room' });
+            return res.status(200).json({ status: 'failed', reason: 'You are already a part of this class room', accesstoken: req.accesstoken });
         }
         const classData = await ClassModel.findOne({ id: classId });
         if (!classData) return res.sendStatus(404);
@@ -100,20 +121,18 @@ Router.post('/invite', validate, status, async (req, res) => {
             })
             classData.teachers.push(teacher);
             await classData.save();
-            return res.sendStatus(200).json({ status: 'success', type: 'teacher', accesstoken: req.accesstoken });
+            return res.status(200).json({ status: 'success', type: 'teacher', accesstoken: req.accesstoken });
         }
         const student = new StudentModel({
             id: user.id,
         })
         classData.students.push(student);
         await classData.save();
-        return res.sendStatus(200).json({ status: 'success', type: 'student', accesstoken: req.accesstoken });
+        return res.status(200).json({ status: 'success', type: 'student', accesstoken: req.accesstoken });
     } catch (error) {
         console.log(error);
         res.sendStatus(500);
     }
-
-
 })
 
 module.exports = Router;

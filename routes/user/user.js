@@ -33,6 +33,20 @@ Router.get('/info', validate, async (req, res) => {
     }
 });
 
+Router.delete('/logout',validate,async(req,res)=>{
+    try {
+        const user=req.user;
+        if(mongoose.isValidObjectId(user)){
+            user.refreshtoken.pull(req.refreshtoken);
+            await user.save();
+            return res.sendStatus(200);
+        }
+        return res.sendStatus(404);
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+})
 
 
 module.exports = Router;

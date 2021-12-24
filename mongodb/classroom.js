@@ -2,12 +2,12 @@ const mongoose=require('mongoose');
 const { userSchema } = require('./user');
 
 const teacherSchema=new mongoose.Schema({
-    id:{ type:String,required:true,unique:true },
+    id:{ type:String,required:true },
     role:{type:String,enum:['admin','basic'],default:'basic'},
     information:{type:Object}
 })
 const studentSchema=new mongoose.Schema({
-    id:{ type:String,required:true,unique:true },
+    id:{ type:String,required:true },
     information:{type:Object}
 })
 
@@ -18,6 +18,7 @@ const classSchema = new mongoose.Schema({
     description: {type:String},
     teachers :  [teacherSchema],
     students : [studentSchema],
+    shadow:{type:Boolean,default:false},
     information:{type:Object}
 });
 
