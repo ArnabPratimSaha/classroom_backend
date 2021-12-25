@@ -19,7 +19,7 @@ const classSchema = new mongoose.Schema({
     teachers :  [teacherSchema],
     students : [studentSchema],
     shadow:{type:Boolean,default:false},
-    information:{type:Object}
+    information:{type:Map}
 });
 
 const ClassModel = mongoose.model('Class', classSchema);
