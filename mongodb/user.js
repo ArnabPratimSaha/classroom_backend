@@ -6,6 +6,8 @@ const userSchema=new mongoose.Schema({
     name:{type:String,required:true},
     avatar:{type:String,required:false},
     refreshtoken:{type:[String],required:true},
+    information:{type:Map},
+    classes:{type:Array,default:()=>[]}
 });
 
 const UserModel = mongoose.model('User', userSchema);

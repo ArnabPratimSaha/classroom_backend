@@ -12,7 +12,7 @@ const classView = async (req, res, next) => {
         const status = req.status;
         if (!status) return res.sendStatus(403);
         const classData = await ClassModel.findOne({ id: req.headers.classid });
-        var information = { ...status,shadow:classData.shadow?true:false };
+        var information = { ...status, shadow: classData.shadow ? true : false, information: classData.information };
         const teachers = classData.teachers.map(e => {
             return { id: e.id, information: e.information, role: e.role };
         });

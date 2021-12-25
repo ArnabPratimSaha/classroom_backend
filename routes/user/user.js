@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { getClasses } = require("../../functions/getclasses");
 const { validate } = require("../../middleware/validation");
 const { UserModel } = require("../../mongodb/user");
 const Router = require("express").Router();
@@ -9,34 +10,32 @@ const Router = require("express").Router();
 //used [VALIDATE] middleware(see those middleware for full info)
 Router.get('/info', validate, async (req, res) => {
     try {
-        const user = req.user;
-        if (!req.headers.q) {
-            return res.status(200).json({ id: user.id, name: user.name, email: user.email, avatar: user.avatar, accesstoken: req.accesstoken, refreshtoken: req.refreshtoken })
-        };
-        const query = (req.headers.q).split(' ');
-        var obj = {};
+        var user = req.user;
+        var query = (req.headers.q||'').split(' ');
+        let classes;
+        if(query.includes('class')){
+            query=query.filter(q=>q!=='class');
+            classes=await getClasses(user.classes);
+        }
+        var queryString='';
         query.forEach(q => {
-            if (q === 'email')
-                obj.email = user.email;
-            if (q === 'name')
-                obj.name = user.name;
-            if (q === 'id')
-                obj.id = user.id;
-            if (q === 'avatar')
-                obj.avatar = user.avatar;
-        })
-        res.status(200).json({ ...obj, accesstoken: req.accesstoken, refreshtoken: req.refreshtoken })
-
+            queryString+=`${q} `;
+        });
+        var userData=await UserModel.findOne({id:user.id},`-_id ${queryString}`);
+        userData.classes=classes;
+        res.status(200).json({ user:userData,accesstoken: req.accesstoken })
     } catch (error) {
         console.log(error);
         res.sendStatus(500);
     }
 });
-
-Router.delete('/logout',validate,async(req,res)=>{
+//logout the user
+//required headers [id,accesstoken,refreshtoken]
+//used [VALIDATE] middleware(see those middleware for full info)
+Router.delete('/logout', validate, async (req, res) => {
     try {
-        const user=req.user;
-        if(mongoose.isValidObjectId(user)){
+        const user = req.user;
+        if (mongoose.isValidObjectId(user)) {
             user.refreshtoken.pull(req.refreshtoken);
             await user.save();
             return res.sendStatus(200);
@@ -46,7 +45,65 @@ Router.delete('/logout',validate,async(req,res)=>{
         console.log(error);
         res.sendStatus(500);
     }
+});
+//add new field for the user
+//required headers [id,accesstoken,refreshtoken,fieldname,fieldvalue]
+//used [VALIDATE] middleware(see those middleware for full info)
+Router.post('/info', validate, async (req, res) => {
+    try {
+        const user = await UserModel.findOne({ id: req.user.id });
+        const fieldName = req.body.fieldname;
+        const fieldValue = req.body.fieldvalue;
+        if (!user.information) user.information = new Map();
+        if (user.information.has(fieldName)) return res.sendStatus(403);
+        user.information.set(fieldName, fieldValue);
+        await user.save();
+        const response = await UserModel.findOne({ id: req.user.id }, 'name id email information avatar');
+        response._id = null;
+        res.status(200).json(response);
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
 })
-
+//add new field for the user
+//required headers [id,accesstoken,refreshtoken,fieldname]
+//used [VALIDATE] middleware(see those middleware for full info)
+Router.delete('/info', validate, async (req, res) => {
+    try {
+        const user = await UserModel.findOne({ id: req.user.id });
+        const fieldName = req.body.fieldname;
+        if (!user.information) user.information = new Map();
+        if (!user.information.has(fieldName)) return res.sendStatus(403);
+        user.information.delete(fieldName);
+        await user.save();
+        const response = await UserModel.findOne({ id: req.user.id }, 'name id email information avatar');
+        response._id = null;
+        res.status(200).json(response);
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+})
+//add new field for the user
+//required headers [id,accesstoken,refreshtoken,fieldname,fieldvalue]
+//used [VALIDATE] middleware(see those middleware for full info)
+Router.patch('/info', validate, async (req, res) => {
+    try {
+        const user = await UserModel.findOne({ id: req.user.id });
+        const fieldName = req.body.fieldname;
+        const fieldValue = req.body.fieldvalue;
+        if (!user.information) user.information = new Map();
+        if (!user.information.has(fieldName)) return res.sendStatus(403);
+        user.information.set(fieldName, fieldValue);
+        await user.save();
+        const response = await UserModel.findOne({ id: req.user.id }, 'name id email information avatar');
+        response._id = null;
+        res.status(200).json(response);
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+})
 
 module.exports = Router;
