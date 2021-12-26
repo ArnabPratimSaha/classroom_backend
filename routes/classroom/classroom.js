@@ -263,7 +263,7 @@ Router.delete('/info', validate, admin, async (req, res) => {
 Router.delete('/kick', validate, admin, async (req, res) => {
     try {
         const memberid = req.body.memberid;
-        if (!req.headers.classid && !memberid) return res.sendStatus(400).json('missing fields [classid,memberid]');
+        if (!req.headers.classid || !memberid) return res.sendStatus(400).json('missing fields either [classid,memberid]');
         if (req.user.id === memberid) return res.status(403).json('can not kick oneself');
         const classData = await ClassModel.findOne({ id: req.headers.classid });
         if (!classData) return res.sendStatus(400);
@@ -282,7 +282,7 @@ Router.delete('/kick', validate, admin, async (req, res) => {
         });
         if (!member.info) return res.status(404).json('user not found');
         const kickedUser = await UserModel.findOne({ id: member.info.id });
-        kickedUser.classes = kickedUser.classes.filter(k => k !== member.info.id);
+        kickedUser.classes = kickedUser.classes.filter(k => k != req.headers.classid);
         await classData.save();
         await kickedUser.save();
         const response = await ClassModel.findOne({ id: req.headers.classid }, '-_id -__v');
