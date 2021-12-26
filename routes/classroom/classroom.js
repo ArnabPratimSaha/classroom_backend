@@ -1,25 +1,26 @@
 const { validate } = require("../../middleware/validation");
 const Router = require("../authentication/authentication");
 const { v4: uuidv4 } = require('uuid');
-const { TeacherModel, ClassModel, StudentModel } = require("../../mongodb/classroom");
+const { TeacherModel, ClassModel, StudentModel, FieldModel, MemberInformationModel } = require("../../mongodb/classroom");
 const { admin, status } = require('../../middleware/role');
 const { InviteModel } = require("../../mongodb/invitelink");
 const { UserModel } = require("../../mongodb/user");
 const { classView } = require("../../middleware/classinfo");
 //create a classroom by an user
 //required headers [id,accesstoken,refreshtoken]
-//required body [name,description(not required)]
+//required body [name,description(not required),fields]
 //used [VALIDATE] middleware(see those middleware for full info)
 Router.post('/create', validate, async (req, res) => {
     try {
         const user = req.user;
         const name = req.body.name;
         const description = req.body.description;
+        var studentFields = (req.body.fields || '').split(' ');
         const teacher = new TeacherModel({
             id: user.id,
             role: 'admin',
         });
-        const classId=uuidv4();
+        const classId = uuidv4();
         const newclass = new ClassModel({
             id: classId,
             name: name,
@@ -28,7 +29,14 @@ Router.post('/create', validate, async (req, res) => {
             teachers: [teacher],
             students: [],
         });
-        if(!user.classes)user.classes=[classId];
+        newclass.requiredFields = [];
+        studentFields.forEach(s => {
+            newclass.requiredFields.push(new FieldModel({
+                name: s.split('>')[0],
+                priority: s.split('>')[1]
+            }))
+        });
+        if (!user.classes) user.classes = [classId];
         else user.classes.push(classId);
         await user.save();
         const response = await newclass.save();
@@ -38,11 +46,9 @@ Router.post('/create', validate, async (req, res) => {
         res.sendStatus(500);
     }
 });
-
-
 //create an invite link-can only be created by and admin
 //required headers [id,accesstoken,refreshtoken,expi(default 30 days),type(default student)]
-//used [VALIDATE] middleware(see those middleware for full info)
+//used [VALIDATE,ADMIN] middleware(see those middleware for full info)
 Router.get('/invite', validate, admin, async (req, res) => {
     try {
         const user = req.user;
@@ -78,16 +84,14 @@ Router.get('/invite', validate, admin, async (req, res) => {
         res.sendStatus(500);
     }
 });
-//accept the invitation link by an user
-//required headers [id,accesstoken,refreshtoken,classid]
-//required body [inviteid] 
+//see the information about an invite link-can only be seen by someone  not in the classroom
+//required headers [id,accesstoken,refreshtoken]
 //used [VALIDATE,STATUS] middleware(see those middleware for full info)
-Router.post('/invite', validate, status, async (req, res) => {
+Router.get('/invite/info', validate, status, async (req, res) => {
     try {
-        const user = req.user;
+        if (req.status) return res.status(409).json('user is aleady part of the class');
         const classId = req.headers.classid;
         const inviteId = req.body.inviteid;
-        if (!classId || !inviteId) return res.sendStatus(400);
         const invite = await InviteModel.findOne({ classId: classId });
         if (!invite) return res.sendStatus(404);
         const inviteData = invite.inviteIds.find(e => e.id === inviteId)
@@ -97,24 +101,68 @@ Router.post('/invite', validate, status, async (req, res) => {
             //
             return res.sendStatus(404);
         }
+        const classData = await ClassModel.findOne({ id: classId }, '-_id id name requiredFields totalMemberCount information shadow teachers');
+        return res.status(200).json({ class: classData, invite: inviteId, accesstoken: req.accesstoken });
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+})
+
+//accept the invitation link by an user
+//required headers [id,accesstoken,refreshtoken,classid]
+//required body [inviteid] 
+//used [VALIDATE,STATUS] middleware (see those middleware for full info)
+Router.post('/invite', validate, status, async (req, res) => {
+    try {
+        const user = req.user;
+        const classId = req.headers.classid;
+        const inviteId = req.body.inviteid;
+        const fields=new Map(req.body.fields||[]);
+        if (!classId || !inviteId) return res.sendStatus(400);
+        const invite = await InviteModel.findOne({ classId: classId });
+        if (!invite) return res.sendStatus(404);
+        const inviteData = invite.inviteIds.find(e => e.id === inviteId)
+        if (!inviteData) return res.sendStatus(404);
+        if (inviteData.expireIn < new Date()) {
+            //delete this info
+            return res.sendStatus(404);
+        }
         if (req.status) {
             return res.status(409).json('user is aleady part of the class');
         }
         const classData = await ClassModel.findOne({ id: classId });
-        if (!classData) return res.sendStatus(404);
+        if (!classData) return res.status(404).json('class not found');
+        if (classData.totalMemberCount >= 200) return res.status(409).json('class is full');
         if (inviteData.type === 'teacher') {
             const teacher = new TeacherModel({
                 id: user.id,
-            })
+            });
             classData.teachers.push(teacher);
             await classData.save();
             user.classes.push(classId);
             await user.save();
             return res.status(200).json({ classid: classId, type: 'teacher', accesstoken: req.accesstoken });
         }
+
         const student = new StudentModel({
             id: user.id,
-        })
+            information:[]
+        });
+        let highestPriorityInfo=classData.requiredFields[0];
+        classData.requiredFields.forEach(f=>{
+            if(!fields.get(f.name))return res.status(400).json(`${f.name} not found`);
+            if(f.priority>highestPriorityInfo.priority){
+                highestPriorityInfo=f;
+            }
+            const info = new MemberInformationModel({
+                name: f.name,
+                value: fields.get(f.name),
+                priority: f.priority
+            });
+            student.information.push(info);
+        });
+        student.topInfo={name:highestPriorityInfo.name,value:fields.get(highestPriorityInfo.name)};
         classData.students.push(student);
         await classData.save();
         user.classes.push(classId);
@@ -129,16 +177,16 @@ Router.post('/invite', validate, status, async (req, res) => {
 //get information of a classroom by an user (if the user is in the classroom)
 //required headers [id,accesstoken,refreshtoken,classid]
 //used [VALIDATE,STATUS] middleware(see those middleware for full info)
-Router.get('/info', validate, status,classView, async (req, res) => {
+Router.get('/info', validate, status, classView, async (req, res) => {
     try {
-        if(!req.headers.q)return res.status(200).json(req.view);
-        const query=req.headers.q.split(' ');
-        var view={teacher:req.view.teacher,student:req.view.student,admin:req.view.admin,requestedPerson:req.view.requestedPerson};
+        if (!req.headers.q) return res.status(200).json(req.view);
+        const query = req.headers.q.split(' ');
+        var view = { teacher: req.view.teacher, student: req.view.student, admin: req.view.admin, requestedPerson: req.view.requestedPerson };
         query.forEach(e => {
-            if(e==='teacher')view.teachers=req.view.teachers;
-            if(e==='student')view.students=req.view.students;
+            if (e === 'teacher') view.teachers = req.view.teachers;
+            if (e === 'student') view.students = req.view.students;
         });
-        res.status(200).json({...view,accesstoken:req.accesstoken});
+        res.status(200).json({ ...view, accesstoken: req.accesstoken });
     } catch (error) {
         console.log(error);
         res.sendStatus(500);
@@ -151,16 +199,16 @@ Router.post('/info', validate, admin, async (req, res) => {
     try {
         const fieldName = req.body.fieldname;
         const fieldValue = req.body.fieldvalue;
-        if(!fieldName || !fieldValue)return res.sendStatus(400);
-        if(!req.headers.classid)return res.sendStatus(400);
-        const classData=await ClassModel.findOne({id:req.headers.classid});
-        if(!classData)return res.sendStatus(400);
-        if(!classData.information)classData.information=new Map();
-        if(classData.information.has(fieldName))return res.status(409).json(`{${fieldName}} already present`);//conflict
-        classData.information.set(fieldName,fieldValue);
-        const response=await classData.save();
-        const sendData=await ClassModel.findOne({id:response.id},'-_id id name information');
-        res.status(200).json({...sendData,accesstoken:req.accesstoken});
+        if (!fieldName || !fieldValue) return res.sendStatus(400);
+        if (!req.headers.classid) return res.sendStatus(400);
+        const classData = await ClassModel.findOne({ id: req.headers.classid });
+        if (!classData) return res.sendStatus(400);
+        if (!classData.information) classData.information = new Map();
+        if (classData.information.has(fieldName)) return res.status(409).json(`{${fieldName}} already present`);//conflict
+        classData.information.set(fieldName, fieldValue);
+        const response = await classData.save();
+        const sendData = await ClassModel.findOne({ id: response.id }, '-_id id name information');
+        res.status(200).json({ ...sendData, accesstoken: req.accesstoken });
     } catch (error) {
         console.log(error);
         res.status(500);
@@ -173,16 +221,16 @@ Router.patch('/info', validate, admin, async (req, res) => {
     try {
         const fieldName = req.body.fieldname;
         const fieldValue = req.body.fieldvalue;
-        if(!fieldName || !fieldValue)return res.sendStatus(400);
-        if(!req.headers.classid)return res.sendStatus(400);
-        const classData=await ClassModel.findOne({id:req.headers.classid});
-        if(!classData)return res.sendStatus(400);
-        if(!classData.information)classData.information=new Map();
-        if(!classData.information.has(fieldName))return res.status(409).json(`no such {${fieldName}} found`);//conflict
-        classData.information.set(fieldName,fieldValue);
-        const response=await classData.save();
-        const sendData=await ClassModel.findOne({id:response.id},'-_id id name information');
-        res.status(200).json({...sendData,accesstoken:req.accesstoken});
+        if (!fieldName || !fieldValue) return res.sendStatus(400);
+        if (!req.headers.classid) return res.sendStatus(400);
+        const classData = await ClassModel.findOne({ id: req.headers.classid });
+        if (!classData) return res.sendStatus(400);
+        if (!classData.information) classData.information = new Map();
+        if (!classData.information.has(fieldName)) return res.status(409).json(`no such {${fieldName}} found`);//conflict
+        classData.information.set(fieldName, fieldValue);
+        const response = await classData.save();
+        const sendData = await ClassModel.findOne({ id: response.id }, '-_id id name information');
+        res.status(200).json({ ...sendData, accesstoken: req.accesstoken });
     } catch (error) {
         console.log(error);
         res.sendStatus(500);
@@ -194,16 +242,16 @@ Router.patch('/info', validate, admin, async (req, res) => {
 Router.delete('/info', validate, admin, async (req, res) => {
     try {
         const fieldName = req.body.fieldname;
-        if(!fieldName)return res.sendStatus(400);
-        if(!req.headers.classid)return res.sendStatus(400);
-        const classData=await ClassModel.findOne({id:req.headers.classid});
-        if(!classData)return res.sendStatus(400);
-        if(!classData.information)classData.information=new Map();
-        if(!classData.information.has(fieldName))return res.status(409).json(`no such {${fieldName}} found`);//conflict
+        if (!fieldName) return res.sendStatus(400);
+        if (!req.headers.classid) return res.status(400).json('missing fields [classid]');
+        const classData = await ClassModel.findOne({ id: req.headers.classid });
+        if (!classData) return res.sendStatus(400);
+        if (!classData.information) classData.information = new Map();
+        if (!classData.information.has(fieldName)) return res.status(409).json(`no such {${fieldName}} found`);//conflict
         classData.information.delete(fieldName);
-        const response=await classData.save();
-        const sendData=await ClassModel.findOne({id:response.id},'-_id id name information');
-        res.status(200).json({...sendData,accesstoken:req.accesstoken});
+        const response = await classData.save();
+        const sendData = await ClassModel.findOne({ id: response.id }, '-_id id name information');
+        res.status(200).json({ ...sendData, accesstoken: req.accesstoken });
     } catch (error) {
         console.log(error);
         res.sendStatus(500);
@@ -212,32 +260,32 @@ Router.delete('/info', validate, admin, async (req, res) => {
 //kick an user from a classroom
 //required headers [id,accesstoken,refreshtoken,classid,memberid(student || teacher)]
 //used [VALIDATE,ADMIN] middleware(see those middleware for full info)
-Router.delete('/kick',validate,admin,async(req,res)=>{
+Router.delete('/kick', validate, admin, async (req, res) => {
     try {
         const memberid = req.body.memberid;
-        if(!req.headers.classid&& !memberid)return res.sendStatus(400);
-        if(req.user.id===memberid)return res.status(403).json('can not kick oneself');
-        const classData=await ClassModel.findOne({id:req.headers.classid});
-        if(!classData)return res.sendStatus(400);
-        var member={};
+        if (!req.headers.classid && !memberid) return res.sendStatus(400).json('missing fields [classid,memberid]');
+        if (req.user.id === memberid) return res.status(403).json('can not kick oneself');
+        const classData = await ClassModel.findOne({ id: req.headers.classid });
+        if (!classData) return res.sendStatus(400);
+        var member = {};
         classData.teachers.forEach(t => {
             if (t.id === memberid) {
                 member.info = t, member.type = 'teacher';
-                classData.teachers=classData.teachers.filter(i=>i.id!==memberid);
+                classData.teachers = classData.teachers.filter(i => i.id !== memberid);
             }
         });
         classData.students.forEach(s => {
             if (s.id === memberid) {
                 member.info = s, member.type = 'student';
-                classData.students=classData.students.filter(i=>i.id!==memberid);
+                classData.students = classData.students.filter(i => i.id !== memberid);
             }
         });
-        if(!member.info)return res.status(404).json('user not found');
-        const kickedUser=await UserModel.findOne({id:member.info.id});
-        kickedUser.classes=kickedUser.classes.filter(k=>k!==member.info.id);
+        if (!member.info) return res.status(404).json('user not found');
+        const kickedUser = await UserModel.findOne({ id: member.info.id });
+        kickedUser.classes = kickedUser.classes.filter(k => k !== member.info.id);
         await classData.save();
         await kickedUser.save();
-        const response=await ClassModel.findOne({id:req.headers.classid},'-_id -__v');
+        const response = await ClassModel.findOne({ id: req.headers.classid }, '-_id -__v');
         return res.status(200).json(response);
     } catch (error) {
         console.log(error);

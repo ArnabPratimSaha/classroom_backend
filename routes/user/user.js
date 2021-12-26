@@ -55,7 +55,7 @@ Router.post('/info', validate, async (req, res) => {
         const fieldName = req.body.fieldname;
         const fieldValue = req.body.fieldvalue;
         if (!user.information) user.information = new Map();
-        if (user.information.has(fieldName)) return res.sendStatus(403);
+        if (user.information.has(fieldName)) return res.status(403).json('fieldname were aldeady present');
         user.information.set(fieldName, fieldValue);
         await user.save();
         const response = await UserModel.findOne({ id: req.user.id }, 'name id email information avatar');
@@ -74,7 +74,7 @@ Router.delete('/info', validate, async (req, res) => {
         const user = await UserModel.findOne({ id: req.user.id });
         const fieldName = req.body.fieldname;
         if (!user.information) user.information = new Map();
-        if (!user.information.has(fieldName)) return res.sendStatus(403);
+        if (!user.information.has(fieldName)) return res.status(403).json('could not specified field');
         user.information.delete(fieldName);
         await user.save();
         const response = await UserModel.findOne({ id: req.user.id }, 'name id email information avatar');
@@ -94,7 +94,7 @@ Router.patch('/info', validate, async (req, res) => {
         const fieldName = req.body.fieldname;
         const fieldValue = req.body.fieldvalue;
         if (!user.information) user.information = new Map();
-        if (!user.information.has(fieldName)) return res.sendStatus(403);
+        if (!user.information.has(fieldName)) return res.status(403).json('could not specified field');
         user.information.set(fieldName, fieldValue);
         await user.save();
         const response = await UserModel.findOne({ id: req.user.id }, 'name id email information avatar');

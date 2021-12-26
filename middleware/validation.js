@@ -6,10 +6,11 @@ const { UserModel } = require('../mongodb/user');
 //adds [user,accesstoken,refreshtoken] to req(accessed as req.user from next middleware)
 const validate = async (req, res, next) => {
     try {
+        if(!req.headers.accesstoken|| !req.headers.refreshtoken ||!req.headers.id)return res.status(400).json('missing fields either [accesstoken,id,refreshtoken]')
         const accesstoken = req.headers.accesstoken;
         var decoded = jwt.verify(accesstoken, process.env.SECRET);
         const user = await UserModel.findOne({ id: decoded.id });
-        if (!user) return res.sendStatus(404);
+        if (!user) return res.status(404).json('no user found');
         req.accesstoken = accesstoken;
         req.refreshtoken = req.headers.refreshtoken;
         req.user = user;
@@ -22,7 +23,7 @@ const validate = async (req, res, next) => {
                 const refreshtoken = req.headers.refreshtoken;
                 const id = req.headers.id;
                 const user = await UserModel.findOne({ id: id });
-                if (!user) return res.sendStatus(404);
+                if (!user) return res.status(404).json('no user found');
                 if (user.refreshtoken.includes(refreshtoken)) {
                     req.accesstoken = jwt.sign({ id: user.id }, process.env.SECRET, { expiresIn: 60 });//1 min
                     req.user = user;
@@ -33,7 +34,7 @@ const validate = async (req, res, next) => {
                 //user does not have refresh token or have a wrong refresh token
                 user.refreshtoken = [];
                 await user.save();
-                return res.sendStatus(401);
+                return res.status(401).json('security breached');
             } catch (e) {
                 console.log(e);
                 return res.sendStatus(500);
@@ -45,10 +46,10 @@ const validate = async (req, res, next) => {
                 console.log('4');
                 const id = req.headers.id;
                 const user = await UserModel.findOne({ id: id });
-                if (!user) return res.sendStatus(404);
+                if (!user) return res.status(404).json('no user found');
                 user.refreshtoken = [];
                 await user.save();
-                return res.sendStatus(401);
+                return res.status(401).json('security breached');
             } catch (e) {
                 console.log(e);
                 return res.sendStatus(500);

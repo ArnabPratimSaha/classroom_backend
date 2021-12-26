@@ -19,7 +19,9 @@ app.use(passport.session());
 const connectMongo = async() => {
   try {
     const response =await mongoose.connect(process.env.DATABASE, { useNewUrlParser: true, useUnifiedTopology: true });
-    console.log(`Successfully Connected to ${response.connection.client.s.options.dbName}`)
+    console.log(`Successfully Connected to ${response.connection.client.s.options.dbName}`);
+    mongoose.models.Class.watch().on('change',updateMemberCout);
+    
   } catch (error) {
     console.log('could not connect to mongoDB ATLAS');
   }
@@ -29,6 +31,7 @@ connectMongo();
 const auth = require('./routes/authentication/authentication');
 const classroom = require('./routes/classroom/classroom');
 const user = require('./routes/user/user');
+const { updateMemberCout } = require('./mongoose-event/classroom');
 app.use('/auth', auth);
 app.use('/class', classroom);
 app.use('/user', user)
