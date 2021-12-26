@@ -6,6 +6,7 @@ const { ClassModel } = require("../mongodb/classroom");
 //ADDS [user,accesstoken,refreshtoken] to req(accessed as req.user from next middleware)
 const admin = async (req, res, next) => {
     try {
+        if(!req.headers.classid)return res.status(400).json('missing header classid');
         const data = await ClassModel.findOne({ id: req.headers.classid });
         if (!data) return res.status(404).json('class not found');
         if (data.teachers.find(e=>e.id===req.user.id) && data.teachers.find(e => e.role === 'admin')) {
