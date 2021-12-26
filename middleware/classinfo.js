@@ -10,9 +10,9 @@ const classView = async (req, res, next) => {
     try {
         const user = req.user;
         const status = req.status;
-        if (!status) return res.sendStatus(403);
+        if (!status) return res.status(403).json('user is not part of the class');
         const classData = await ClassModel.findOne({ id: req.headers.classid });
-        var information = { ...status, shadow: classData.shadow ? true : false, information: classData.information };
+        var information = { ...status, shadow: classData.shadow ? true : false, information: classData.information,totalMemberCount:classData.totalMemberCount };
         const teachers = classData.teachers.map(e => {
             return { id: e.id, information: e.information, role: e.role };
         });
@@ -45,7 +45,8 @@ const classView = async (req, res, next) => {
         });
         if (classData.shadow) {
             if (status.student) {
-                information.students = null;
+                information.students = undefined;
+                information.totalMemberCount=undefined;
             }
         }
         req.view = information;

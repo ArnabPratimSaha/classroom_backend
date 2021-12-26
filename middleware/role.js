@@ -7,14 +7,14 @@ const { ClassModel } = require("../mongodb/classroom");
 const admin = async (req, res, next) => {
     try {
         const data = await ClassModel.findOne({ id: req.headers.classid });
-        if (!data) return res.sendStatus(404);
+        if (!data) return res.status(404).json('class not found');
         if (data.teachers.find(e=>e.id===req.user.id) && data.teachers.find(e => e.role === 'admin')) {
             //admin role
             req.class=data;
             next();
             return;
         }
-        return res.sendStatus(403);
+        return res.status(403).json('user does not have any access.');
     } catch (error) {
         console.log(e);
         return res.sendStatus(500);
@@ -32,7 +32,7 @@ const admin = async (req, res, next) => {
 const status=async (req, res, next) => {
     try {
         const data = await ClassModel.findOne({ id: req.headers.classid });
-        if (!data) return res.sendStatus(404);
+        if (!data) return res.status(404).json('class not found');
         const status={};
         if (data.teachers.find(e => e.id === req.user.id)) {
             //teacher
