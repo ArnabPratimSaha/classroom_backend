@@ -1,5 +1,5 @@
 const { ClassModel } = require("../mongodb/classroom");
-
+//event that updates memebercount of the classes
 const updateMemberCout=async(change)=>{
     try {
       if(change.updateDescription && (change.updateDescription.updatedFields.students || change.updateDescription.updatedFields.teachers)){
