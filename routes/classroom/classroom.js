@@ -182,7 +182,7 @@ Router.get('/info', validate, status, classView, async (req, res) => {
     try {
         if (!req.headers.q) return res.status(200).json(req.view);
         const query = req.headers.q.split(' ');
-        var view = { teacher: req.view.teacher, student: req.view.student, admin: req.view.admin, requestedPerson: req.view.requestedPerson };
+        var view = { teacher: req.view.teacher, student: req.view.student, admin: req.view.admin, requestedPerson: req.view.requestedPerson,requiredFields:req.view.requiredFields };
         query.forEach(e => {
             if (e === 'teacher') view.teachers = req.view.teachers;
             if (e === 'student') view.students = req.view.students;

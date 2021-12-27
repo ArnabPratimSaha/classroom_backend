@@ -6,8 +6,7 @@ const mongoose = require('mongoose');
 const cors=require('cors');
 const passport =require('./routes/authentication/google-auth');
 const session = require('express-session')
-const bodyParser = require('body-parser');
-const { v4: uuidv4 } = require('uuid');
+const path=require('path')
 app.use(cors());
 app.use(express.urlencoded({extended:true}));
 app.use(express.json({extended:true}));
@@ -15,6 +14,7 @@ app.use(express.raw({extended:true}));
 app.use(session({secret: 'keyboard cat',cookie: {},resave:'on',saveUninitialized:true}));
 app.use(passport.initialize());
 app.use(passport.session());
+app.use('/files',express.static(path.join('files')))
 
 const connectMongo = async() => {
   try {
@@ -32,9 +32,12 @@ const auth = require('./routes/authentication/authentication');
 const classroom = require('./routes/classroom/classroom');
 const user = require('./routes/user/user');
 const { updateMemberCout } = require('./mongoose-event/classroom');
+const test=require('./routes/test/test');
+
 app.use('/auth', auth);
 app.use('/class', classroom);
-app.use('/user', user)
+app.use('/user', user);
+app.use('/test',test)
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
 })
