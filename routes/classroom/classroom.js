@@ -16,31 +16,34 @@ Router.post('/create', validate, async (req, res) => {
         const name = req.body.name;
         if(!name)return res.status(400).json('missing field(s) [name]');
         const description = req.body.description;
-        var studentFields = (req.body.fields || '').split(' ');
+        const studentFields = new Map(req.body.fields || []);
+        const classId = uuidv4();
         const teacher = new TeacherModel({
             id: user.id,
+            classId:classId,
             role: 'admin',
+            className:user.name
         });
-        const classId = uuidv4();
         const newclass = new ClassModel({
             id: classId,
             name: name,
             createdAt: new Date(),
             description: description,
-            teachers: [teacher],
-            students: [],
+            students:[],
+            teachers:[req.user.id]
         });
         newclass.requiredFields = [];
-        studentFields.forEach(s => {
+        studentFields.forEach((value, key) => {
             newclass.requiredFields.push(new FieldModel({
-                name: s.split('>')[0],
-                priority: s.split('>')[1]
+                name: key,
+                priority: value
             }))
         });
         if (!user.classes) user.classes = [classId];
         else user.classes.push(classId);
         await user.save();
         const response = await newclass.save();
+        teacher.save();
         res.status(200).json({  class: response,accesstoken: req.accesstoken });
     } catch (error) {
         console.log(error);
@@ -52,11 +55,9 @@ Router.post('/create', validate, async (req, res) => {
 //uses [VALIDATE,ADMIN] middleware(see those middleware for full info)
 Router.get('/invite', validate, admin, async (req, res) => {
     try {
-        const user = req.user;
         const type = req.headers.type || 'student';
         const expireDate = req.headers.expi || 30;
-        const classData = req.class;
-        const link = await InviteModel.findOne({ classId: classData.id });
+        const link = await InviteModel.findOne({ classId: req.headers.classid });
         const id = uuidv4();
         if (link) {
             link.inviteIds.push({
@@ -66,10 +67,10 @@ Router.get('/invite', validate, admin, async (req, res) => {
                 expireIn: new Date().setDate(new Date().getDate() + expireDate)
             })
             await link.save();
-            return res.status(200).json({ type: type, classId: classData.id, inviteid: id, expireIn: new Date().setDate(new Date().getDate() + expireDate), accesstoken: req.accesstoken });
+            return res.status(200).json({ type: type, classId: req.headers.classid, inviteid: id, expireIn: new Date().setDate(new Date().getDate() + expireDate), accesstoken: req.accesstoken });
         }
         const newLink = new InviteModel({
-            classId: classData.id,
+            classId: req.headers.classid,
             inviteIds: [{
                 id: id,
                 type: type,
@@ -78,7 +79,7 @@ Router.get('/invite', validate, admin, async (req, res) => {
             }]
         });
         await newLink.save();
-        return res.status(200).json({ type: type, classId: classData.id, inviteid: id, expireIn: new Date().setDate(new Date().getDate() + expireDate), accesstoken: req.accesstoken });
+        return res.status(200).json({ type: type, classId: req.headers.classid, inviteid: id, expireIn: new Date().setDate(new Date().getDate() + expireDate), accesstoken: req.accesstoken });
 
     } catch (error) {
         console.log(error);
@@ -139,16 +140,21 @@ Router.post('/invite', validate, status, async (req, res) => {
         if (inviteData.type === 'teacher') {
             const teacher = new TeacherModel({
                 id: user.id,
+                classId:classData.id,
+                className:user.name
             });
-            classData.teachers.push(teacher);
-            await classData.save();
+            classData.teachers.push(user.id);
             user.classes.push(classId);
+            await teacher.save();
+            await classData.save();
             await user.save();
             return res.status(200).json({ classid: classId, type: 'teacher', accesstoken: req.accesstoken });
         }
         const student = new StudentModel({
             id: user.id,
-            information:[]
+            classId:classData.id,
+            information:[],
+            className:user.name
         });
         let highestPriorityInfo=classData.requiredFields[0];
         classData.requiredFields.forEach(f=>{
@@ -164,29 +170,24 @@ Router.post('/invite', validate, status, async (req, res) => {
             student.information.push(info);
         });
         student.topInfo={name:highestPriorityInfo.name,value:fields.get(highestPriorityInfo.name)};
-        classData.students.push(student);
-        await classData.save();
+        classData.students.push(user.id);
         user.classes.push(classId);
+        await classData.save();
+        await student.save();
         await user.save();
         return res.status(200).json({ classid: classId, type: 'student', accesstoken: req.accesstoken });
     } catch (error) {
         console.log(error);
-        res.sendStatus(500);
+        return res.sendStatus(500);
     }
 })
 
 //get information of a classroom by an user (if the user is in the classroom)
-//required headers [id,accesstoken,refreshtoken,classid]
+//required headers [id,accesstoken,refreshtoken,classid,q]
 //uses [VALIDATE,STATUS] middleware(see those middleware for full info)
 Router.get('/info', validate, status, classView, async (req, res) => {
     try {
         if (!req.headers.q) return res.status(200).json(req.view);
-        const query = req.headers.q.split(' ');
-        var view = { teacher: req.view.teacher, student: req.view.student, admin: req.view.admin, requestedPerson: req.view.requestedPerson,requiredFields:req.view.requiredFields };
-        query.forEach(e => {
-            if (e === 'teacher') view.teachers = req.view.teachers;
-            if (e === 'student') view.students = req.view.students;
-        });
         res.status(200).json({ ...view, accesstoken: req.accesstoken });
     } catch (error) {
         console.log(error);
@@ -268,21 +269,15 @@ Router.delete('/kick', validate, admin, async (req, res) => {
         if (!req.headers.classid || !memberid) return res.status(400).json('missing fields either [classid,memberid]');
         if (req.user.id === memberid) return res.status(403).json('can not kick oneself');
         const classData = await ClassModel.findOne({ id: req.headers.classid });
-        var member = {};
-        classData.teachers.forEach(t => {
-            if (t.id === memberid) {
-                member.info = t, member.type = 'teacher';
-                classData.teachers = classData.teachers.filter(i => i.id !== memberid);
-            }
-        });
-        classData.students.forEach(s => {
-            if (s.id === memberid) {
-                member.info = s, member.type = 'student';
-                classData.students = classData.students.filter(i => i.id !== memberid);
-            }
-        });
-        if (!member.info) return res.status(404).json('user not found');
-        const kickedUser = await UserModel.findOne({ id: member.info.id });
+        if(!classData.teachers.find(id=>id===memberid) && !classData.students.find(id=>id===memberid))return res.status(404).json('User not found');
+        if(classData.students.find(id=>id===memberid)){
+            classData.students=classData.students.filter(id=>id!==memberid);
+            await StudentModel.findOneAndDelete({id:memberid,classId:classData.id});
+        }else{
+            classData.teachers=classData.teachers.filter(id=>id!==memberid);
+            await TeacherModel.findOneAndDelete({id:memberid,classId:classData.id});
+        }
+        const kickedUser = await UserModel.findOne({ id: memberid });
         kickedUser.classes = kickedUser.classes.filter(k => k != req.headers.classid);
         await classData.save();
         await kickedUser.save();
