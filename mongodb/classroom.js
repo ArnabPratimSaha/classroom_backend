@@ -8,11 +8,15 @@ const inforamtionSchema=new mongoose.Schema({
 
 const teacherSchema=new mongoose.Schema({
     id:{ type:String,required:true },
+    className:{ type:String,required:true },
+    classId:{ type:String,required:true },
     role:{type:String,enum:['admin','basic'],default:'basic'},
     information:{type:Array,default:()=>[]}
 })
 const studentSchema=new mongoose.Schema({
     id:{ type:String,required:true },
+    className:{ type:String,required:true },
+    classId:{type:String,required:true},
     topInfo:{type:Object,default:()=>new Object()},
     information:{type:Array,default:()=>[]}
 })

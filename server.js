@@ -14,7 +14,7 @@ app.use(express.raw({extended:true}));
 app.use(session({secret: 'keyboard cat',cookie: {},resave:'on',saveUninitialized:true}));
 app.use(passport.initialize());
 app.use(passport.session());
-app.use('/files',express.static(path.join('files')))
+app.use('/files',express.static(path.join('files')));
 
 const connectMongo = async() => {
   try {

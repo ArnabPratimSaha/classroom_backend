@@ -1,4 +1,4 @@
-const { ClassModel } = require("../mongodb/classroom");
+const { ClassModel, TeacherModel, StudentModel } = require("../mongodb/classroom");
 const { UserModel } = require("../mongodb/user");
 
 
@@ -13,35 +13,19 @@ const classView = async (req, res, next) => {
         if (!status) return res.status(403).json('user is not part of the class');
         const classData = await ClassModel.findOne({ id: req.headers.classid });
         var information = { ...status, shadow: classData.shadow ? true : false, information: classData.information,totalMemberCount:classData.totalMemberCount };
-        const teachers = classData.teachers.map(e => {
-            return { id: e.id, information: e.information, role: e.role };
-        });
-        const users_teachers = await UserModel.find({ id: { $in: classData.teachers.map(e => e.id) } }, 'id name');
+        const teachers = await TeacherModel.find({ id: { $in: classData.teachers },classId:classData.id }, '-_id -__v');
         information.teachers = teachers.map(e => {
-            const data = users_teachers.find(d => d.id === e.id);
-            if (data.id === user.id && e.id === user.id) {
-                information.requestedPerson = {
-                    name: data.name, ...e
-                }
+            if(e.id===user.id){
+                information.requestedPerson=e;
             }
-            if (data) {
-                return { name: data.name, ...e }
-            }
+            return e;
         });
-        const students = classData.students.map(e => {
-            return { id: e.id, information: e.information };
-        });
-        const users_students = await UserModel.find({ id: { $in: classData.students.map(e => e.id) } }, 'id name');
+        const students = await StudentModel.find({ id: { $in: classData.students },classId:classData.id }, '-_id -__v');
         information.students = students.map(e => {
-            const data = users_students.find(d => d.id === e.id);
-            if (data.id === user.id && e.id === user.id) {
-                information.requestedPerson = {
-                    name: data.name, ...e
-                }
+            if(e.id===user.id){
+                information.requestedPerson=e;
             }
-            if (data) {
-                return { name: data.name, ...e }
-            }
+            return e;
         });
         if (classData.shadow) {
             if (status.student) {
