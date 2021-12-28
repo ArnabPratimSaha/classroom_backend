@@ -40,11 +40,16 @@ const status=async (req, res, next) => {
             const teacher=await TeacherModel.findOne({id:req.user.id,classId:data.id});
             if(teacher.role==='admin') status.admin = true;
             req.status = status;
+            next();
+            return;
         }
         if(data.students.find(e => e === req.user.id)){
             status.student = true;
             req.status = status;
+            next();
+            return;
         }
+        req.status=undefined;
         next();
         return;
     } catch (error) {

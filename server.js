@@ -21,7 +21,6 @@ const connectMongo = async() => {
     const response =await mongoose.connect(process.env.DATABASE, { useNewUrlParser: true, useUnifiedTopology: true });
     console.log(`Successfully Connected to ${response.connection.client.s.options.dbName}`);
     mongoose.models.Class.watch().on('change',updateMemberCout);
-    
   } catch (error) {
     console.log('could not connect to mongoDB ATLAS');
   }
@@ -32,13 +31,14 @@ const auth = require('./routes/authentication/authentication');
 const classroom = require('./routes/classroom/classroom');
 const user = require('./routes/user/user');
 const { updateMemberCout } = require('./mongoose-event/classroom');
-const test=require('./routes/test/test');
 const assignment=require('./routes/assignement/assignment');
+const student=require('./routes/student/student');
 app.use('/auth', auth);
 app.use('/class', classroom);
 app.use('/user', user);
-app.use('/test',test);
 app.use('/assignment',assignment);
+app.use('/student',student);
+
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
 })
