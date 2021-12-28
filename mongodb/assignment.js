@@ -16,7 +16,7 @@ const studentAssignmentSchema=new mongoose.Schema({
     files:{type:Array,maxlength:20},
     submittedAt:{type:Date,default:new Date()}
 });
+
 const AssignmentModel=mongoose.model('Assignment',assignmentSchema);
 const StudentAssignmentModel=mongoose.model('StudentAssignment', studentAssignmentSchema);
-
 module.exports={AssignmentModel,StudentAssignmentModel};

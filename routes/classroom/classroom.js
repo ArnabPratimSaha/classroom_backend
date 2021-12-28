@@ -6,6 +6,8 @@ const { admin, status } = require('../../middleware/role');
 const { InviteModel } = require("../../mongodb/invitelink");
 const { UserModel } = require("../../mongodb/user");
 const { classView } = require("../../middleware/classinfo");
+const { AssignmentModel, StudentAssignmentModel } = require("../../mongodb/assignment");
+const fs=require('fs');
 //create a classroom by an user
 //required headers [id,accesstoken,refreshtoken]
 //required body [name,description(not required),fields(not required)]
@@ -272,7 +274,18 @@ Router.delete('/kick', validate, admin, async (req, res) => {
         if(!classData.teachers.find(id=>id===memberid) && !classData.students.find(id=>id===memberid))return res.status(404).json('User not found');
         if(classData.students.find(id=>id===memberid)){
             classData.students=classData.students.filter(id=>id!==memberid);
-            await StudentModel.findOneAndDelete({id:memberid,classId:classData.id});
+            const student=await StudentModel.findOneAndDelete({id:memberid,classId:classData.id});
+            await AssignmentModel.updateMany({classId:classData.id},{$pull:{submittedStudent:student.id}});
+            const studentAssignments = await StudentAssignmentModel.find({ classId: classData.id, studentId: student.id });
+            for (let i = 0; i < studentAssignments.length; i++) {
+                const assignment = studentAssignments[i];
+                assignment.files.forEach(file => {
+                    fs.unlink(file.path, err => {
+                        if (err) console.log(err);
+                    })
+                });
+                await assignment.deleteOne();
+            }
         }else{
             classData.teachers=classData.teachers.filter(id=>id!==memberid);
             await TeacherModel.findOneAndDelete({id:memberid,classId:classData.id});
