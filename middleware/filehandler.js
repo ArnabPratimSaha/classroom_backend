@@ -39,7 +39,7 @@ const upload = multer({
 });
 
 const fileHandler = (req, res, next) => {
-    const multerUpload = upload.array('file', 10);
+    const multerUpload = upload.array('files', 10);
     multerUpload(req, res, (err) => {
         if (err) {
             return res.status(404).json(err.message);

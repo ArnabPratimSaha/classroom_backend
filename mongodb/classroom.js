@@ -23,7 +23,8 @@ const studentSchema=new mongoose.Schema({
 const fieldSchema=new mongoose.Schema({
     name:{type:String,required:true},
     priority:{type:Number,required:true,default:()=>-1}  
-})
+});
+
 const classSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     name: { type: String, required: true },
@@ -34,7 +35,8 @@ const classSchema = new mongoose.Schema({
     requiredFields:{type:Array,required:true,default:()=>[],maxlength:20},
     totalMemberCount:{type:Number,default:()=>1,required:true},
     shadow:{type:Boolean,default:false},
-    information:{type:Map,default:()=>new Map()}
+    information:{type:Map,default:()=>new Map()},
+    assignments:{type:Array,default:[]}
 });
 
 const ClassModel = mongoose.model('Class', classSchema);
@@ -42,4 +44,5 @@ const TeacherModel= mongoose.model('Teacher', teacherSchema);
 const StudentModel= mongoose.model('Student', studentSchema);
 const MemberInformationModel=mongoose.model('MemberInformation', inforamtionSchema);
 const FieldModel=mongoose.model('Field', fieldSchema);
+
 module.exports={ClassModel,TeacherModel,StudentModel,FieldModel,MemberInformationModel};
