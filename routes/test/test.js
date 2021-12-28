@@ -1,6 +1,6 @@
 const { fileHandler } = require("../../middleware/filehandler");
 const Router=require('express').Router();
-const fs=require('fs');
+
 
 Router.post('/',fileHandler,(req,res)=>{
     try {

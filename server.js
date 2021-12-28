@@ -33,11 +33,12 @@ const classroom = require('./routes/classroom/classroom');
 const user = require('./routes/user/user');
 const { updateMemberCout } = require('./mongoose-event/classroom');
 const test=require('./routes/test/test');
-
+const assignment=require('./routes/assignement/assignment');
 app.use('/auth', auth);
 app.use('/class', classroom);
 app.use('/user', user);
-app.use('/test',test)
+app.use('/test',test);
+app.use('/assignment',assignment);
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
 })
