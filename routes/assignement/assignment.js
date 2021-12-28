@@ -3,9 +3,10 @@ const { status } = require('../../middleware/role');
 const { validate } = require('../../middleware/validation');
 const { AssignmentModel, StudentAssignmentModel } = require('../../mongodb/assignment');
 const { v4: uuidv4 } = require('uuid');
-const { ClassModel, StudentModel } = require('../../mongodb/classroom');
+const { ClassModel } = require('../../mongodb/classroom');
 const { fileHandler } = require('../../middleware/filehandler');
 const fs=require('fs');
+const { StudentModel } = require('../../mongodb/studentSchema');
 
 //create assignment by teacher
 //required headers [id,accesstoken,refreshtoken,classid]

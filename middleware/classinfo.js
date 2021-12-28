@@ -1,5 +1,5 @@
-const { ClassModel, TeacherModel, StudentModel } = require("../mongodb/classroom");
-const { UserModel } = require("../mongodb/user");
+const { ClassModel, TeacherModel } = require("../mongodb/classroom");
+const { StudentModel } = require("../mongodb/studentSchema");
 
 
 //send the information of the classroom from the perspective of the user
@@ -20,12 +20,14 @@ const classView = async (req, res, next) => {
             }
             return e;
         });
-        const students = await StudentModel.find({ id: { $in: classData.students },classId:classData.id }, '-_id -__v');
+        const students = await StudentModel.find({ id: { $in: classData.students },classId:classData.id }, '-_id -__v ');
         information.students = students.map(e => {
+            var student={};
+            student={...e.toObject(),information:e.topInformation()}
             if(e.id===user.id){
-                information.requestedPerson=e;
+                information.requestedPerson=student;
             }
-            return e;
+            return student;
         });
         if (classData.shadow) {
             if (status.student) {
