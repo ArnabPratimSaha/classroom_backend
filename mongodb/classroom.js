@@ -1,14 +1,6 @@
 const mongoose=require('mongoose');
 const { userSchema } = require('./user');
 
-const teacherSchema = new mongoose.Schema({
-    id: { type: String, required: true },
-    className: { type: String, required: true },
-    classId: { type: String, required: true },
-    role: { type: String, enum: ['admin', 'basic'], default: 'basic' },
-    information: { type: Array, default: () => [] }
-})
-
 const fieldSchema=new mongoose.Schema({
     name:{type:String,required:true},
     priority:{type:Number,required:true,default:()=>-1}  
@@ -29,8 +21,8 @@ const classSchema = new mongoose.Schema({
     assignments: { type: Array, default: [] }
 });
 
-const ClassModel = mongoose.model('Class', classSchema);
-const TeacherModel= mongoose.model('Teacher', teacherSchema);
-const FieldModel=mongoose.model('Field', fieldSchema);
 
-module.exports={ClassModel,TeacherModel,FieldModel};
+
+const FieldModel=mongoose.model('Field', fieldSchema);
+const ClassModel = mongoose.model('Class', classSchema);
+module.exports={ClassModel,FieldModel};

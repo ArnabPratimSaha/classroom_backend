@@ -1,7 +1,7 @@
 const { validate } = require("../../middleware/validation");
 const Router = require("../authentication/authentication");
 const { v4: uuidv4 } = require('uuid');
-const { TeacherModel, ClassModel, FieldModel } = require("../../mongodb/classroom");
+const {  ClassModel, FieldModel } = require("../../mongodb/classroom");
 const { admin, status } = require('../../middleware/role');
 const { InviteModel } = require("../../mongodb/invitelink");
 const { UserModel } = require("../../mongodb/user");
@@ -9,6 +9,7 @@ const { classView } = require("../../middleware/classinfo");
 const { AssignmentModel, StudentAssignmentModel } = require("../../mongodb/assignment");
 const fs=require('fs');
 const { StudentModel, StudentInformationModel } = require("../../mongodb/studentSchema");
+const { TeacherModel } = require("../../mongodb/teacherSchema");
 
 //create a classroom by an user
 //required headers [id,accesstoken,refreshtoken]
