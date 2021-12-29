@@ -4,7 +4,17 @@ const inforamtionSchema=new mongoose.Schema({
     value:{type:String,required:true},
     priority:{type:Number,required:true,default:-1},
     required:{type:Boolean,default:false}
-})
+});
+const createStudentInformationObject=(name,value,priority=1,required=false)=>{
+    if(!name || !value)return undefined;
+    const newObject={
+        name:name,
+        value:value,
+        priority:priority,
+        required:required
+    }
+    return newObject;
+}
 const studentSchema=new mongoose.Schema({
     id:{ type:String,required:true },
     className:{ type:String,required:true },
@@ -28,4 +38,4 @@ studentSchema.methods.topInformation=function () {
 
 const StudentModel= mongoose.model('Student', studentSchema);
 const StudentInformationModel=mongoose.model('StudentInformation', inforamtionSchema);
-module.exports={StudentModel,StudentInformationModel}
+module.exports={StudentModel,StudentInformationModel,createStudentInformationObject}
