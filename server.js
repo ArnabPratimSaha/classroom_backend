@@ -33,6 +33,7 @@ const user = require('./routes/user/user');
 const { updateMemberCout } = require('./mongoose-event/classroom');
 const assignment=require('./routes/assignement/assignment');
 const student=require('./routes/student/student');
+
 app.use('/auth', auth);
 app.use('/class', classroom);
 app.use('/user', user);

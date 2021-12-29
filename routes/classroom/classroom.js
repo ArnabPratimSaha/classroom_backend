@@ -1,13 +1,15 @@
 const { validate } = require("../../middleware/validation");
 const Router = require("../authentication/authentication");
 const { v4: uuidv4 } = require('uuid');
-const { TeacherModel, ClassModel, StudentModel, FieldModel, MemberInformationModel } = require("../../mongodb/classroom");
+const { TeacherModel, ClassModel, FieldModel } = require("../../mongodb/classroom");
 const { admin, status } = require('../../middleware/role');
 const { InviteModel } = require("../../mongodb/invitelink");
 const { UserModel } = require("../../mongodb/user");
 const { classView } = require("../../middleware/classinfo");
 const { AssignmentModel, StudentAssignmentModel } = require("../../mongodb/assignment");
 const fs=require('fs');
+const { StudentModel, StudentInformationModel } = require("../../mongodb/studentSchema");
+
 //create a classroom by an user
 //required headers [id,accesstoken,refreshtoken]
 //required body [name,description(not required),fields(not required)]
@@ -164,14 +166,15 @@ Router.post('/invite', validate, status, async (req, res) => {
             if(f.priority>highestPriorityInfo.priority){
                 highestPriorityInfo=f;
             }
-            const info = new MemberInformationModel({
+            const info = new StudentInformationModel({
                 name: f.name,
                 value: fields.get(f.name),
-                priority: f.priority
+                priority: f.priority,
+                required:true
             });
             student.information.push(info);
         });
-        student.topInfo={name:highestPriorityInfo.name,value:fields.get(highestPriorityInfo.name)};
+        // student.topInfo={name:highestPriorityInfo.name,value:fields.get(highestPriorityInfo.name)};
         classData.students.push(user.id);
         user.classes.push(classId);
         await classData.save();
