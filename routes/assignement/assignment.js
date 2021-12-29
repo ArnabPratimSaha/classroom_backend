@@ -7,7 +7,7 @@ const { ClassModel } = require('../../mongodb/classroom');
 const { fileHandler } = require('../../middleware/filehandler');
 const fs=require('fs');
 const { StudentModel } = require('../../mongodb/studentSchema');
-
+const { TeacherModel } = require('../../mongodb/teacherSchema');
 //create assignment by teacher
 //required headers [id,accesstoken,refreshtoken,classid]
 //required body [title,description(not required),submissiondate(not required)]

@@ -1,6 +1,7 @@
 
-const { ClassModel, TeacherModel } = require("../mongodb/classroom");
+const { ClassModel } = require("../mongodb/classroom");
 const { StudentModel } = require("../mongodb/studentSchema");
+const { TeacherModel } = require("../mongodb/teacherSchema");
 
 //this validates if the user is an admin of a class or not
 //THIS NEEDS [VALIDATE] MIDDLEWARE TO EXECUTE FIRST

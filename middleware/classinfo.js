@@ -1,6 +1,6 @@
-const { ClassModel, TeacherModel } = require("../mongodb/classroom");
+const { ClassModel } = require("../mongodb/classroom");
 const { StudentModel } = require("../mongodb/studentSchema");
-
+const { TeacherModel } = require("../mongodb/teacherSchema");
 
 //send the information of the classroom from the perspective of the user
 //THIS NEEDS [VALIDATE,STATUS] MIDDLEWARE TO EXECUTE FIRST
