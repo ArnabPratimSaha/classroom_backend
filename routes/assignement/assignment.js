@@ -8,6 +8,7 @@ const { fileHandler } = require('../../middleware/filehandler');
 const fs=require('fs');
 const { StudentModel } = require('../../mongodb/studentSchema');
 const { TeacherModel } = require('../../mongodb/teacherSchema');
+const { deleteFiles } = require('../../functions/deleteFiles');
 //create assignment by teacher
 //required headers [id,accesstoken,refreshtoken,classid]
 //required body [title,description(not required),submissiondate(not required)]
@@ -90,11 +91,23 @@ Router.post('/submit',validate,status,fileHandler,async(req,res)=>{
     try {
         const assignmentId=req.body.assignmentid;
         const files=req.files;
-        if(!req.status)return res.status(403).json('user is not a part of the class');
-        if(req.status.teacher)return res.status(403).json('teacher can not submit assignment');
-        if(!assignmentId || !files)return res.status(400).json('missing fields [assignmentid,files]');
+        if(!req.status){
+            deleteFiles(req.files)
+            return res.status(403).json('user is not a part of the class');
+        }
+        if(req.status.teacher){
+            deleteFiles(req.files);
+            return res.status(403).json('teacher can not submit assignment');
+        }
+        if(!assignmentId || !files){
+            deleteFiles(req.files);
+            return res.status(400).json('missing fields [assignmentid,files]');
+        }
         const assignment=await AssignmentModel.findOne({id:assignmentId,classId:req.headers.classid});
-        if(!assignment)return res.status(404).json('no such assignment published by teacher');
+        if(!assignment){
+            deleteFiles(req.files);
+            return res.status(404).json('no such assignment published by teacher');
+        }
         const submittedAssignment = await StudentAssignmentModel.findOne({
             assignmentId: assignmentId,
             studentId: req.user.id,
@@ -160,11 +173,7 @@ Router.patch('/submit',validate,status,fileHandler,async(req,res)=>{
         const prevFiles=submittedAssignment.files;
         submittedAssignment.files=files;
         submittedAssignment.submittedAt=new Date();
-        prevFiles.forEach(file => {
-            fs.unlink(file.path, err => {
-                if(err)console.log(err);
-            })
-        })
+        deleteFiles(prevFiles);
         await submittedAssignment.save();
         const response= await StudentAssignmentModel.findOne({
             assignmentId: assignmentId,
@@ -174,6 +183,7 @@ Router.patch('/submit',validate,status,fileHandler,async(req,res)=>{
         res.status(200).json({assignment:response,accesstoken:req.accesstoken})
 
     } catch (error) {
+        deleteFiles(req.files);
         console.log(error);
         res.sendStatus(500);
     }
@@ -197,11 +207,7 @@ Router.delete('/submit',validate,status,async(req,res)=>{
         });
         if(!deletedAssignment)return res.status(403).json('could not find student assignment');
         const prevFiles=deletedAssignment.files;
-        prevFiles.forEach(file => {
-            fs.unlink(file.path, err => {
-                if(err)console.log(err);
-            })
-        });
+        deleteFiles(prevFiles);
         assignment.submittedStudent=assignment.submittedStudent.filter(id=>id!==req.user.id);
         await assignment.save();
         res.status(200).json({assignment:deletedAssignment,accesstoken:req.accesstoken})

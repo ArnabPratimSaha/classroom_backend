@@ -26,20 +26,22 @@ const connectMongo = async() => {
   }
 }
 connectMongo();
+const { updateMemberCout } = require('./mongoose-event/classroom');
 
 const auth = require('./routes/authentication/authentication');
 const classroom = require('./routes/classroom/classroom');
 const user = require('./routes/user/user');
-const { updateMemberCout } = require('./mongoose-event/classroom');
 const assignment=require('./routes/assignement/assignment');
 const student=require('./routes/student/student');
 const teacher=require('./routes/teacher/teacher');
+const invite=require('./routes/invitation/invite');
 app.use('/auth', auth);
 app.use('/class', classroom);
 app.use('/user', user);
 app.use('/assignment',assignment);
 app.use('/student',student);
 app.use('/teacher',teacher)
+app.use('/invite',invite);
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
 })

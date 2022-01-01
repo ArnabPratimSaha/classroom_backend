@@ -20,7 +20,7 @@ Router.get('/info', validate, async (req, res) => {
         query.forEach(q => {
             queryString+=`${q} `;
         });
-        var userData=await UserModel.findOne({id:user.id},`-_id -__v ${queryString}`);
+        var userData=await UserModel.findOne({id:user.id},`-_id ${queryString}`);
         userData.classes=classes;
         res.status(200).json({ user:userData,accesstoken: req.accesstoken })
     } catch (error) {
@@ -48,9 +48,9 @@ Router.delete('/logout', validate, async (req, res) => {
 //used [VALIDATE] middleware(see those middleware for full info)
 Router.post('/info', validate, async (req, res) => {
     try {
-        const user = await UserModel.findOne({ id: req.user.id });
         const fieldName = req.body.fieldname;
         const fieldValue = req.body.fieldvalue;
+        const user = await UserModel.findOne({ id: req.user.id });
         if(!fieldName||!fieldValue)return res.status(400).json('missing field(s) [fieldname,fieldvalue]')
         if (!user.information) user.information = new Map();
         if (user.information.has(fieldName)) return res.status(409).json(`${fieldName} already present`);
@@ -103,6 +103,5 @@ Router.delete('/info', validate, async (req, res) => {
         console.log(error);
         res.sendStatus(500);
     }
-})
-
+});
 module.exports = Router;
