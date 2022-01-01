@@ -1,8 +1,11 @@
 const Router=require('express').Router();
+const { deleteFiles } = require('../../functions/deleteFiles');
 const { status } = require('../../middleware/role');
 const { validate } = require('../../middleware/validation');
+const { StudentAssignmentModel, AssignmentModel } = require('../../mongodb/assignment');
 const { ClassModel } = require('../../mongodb/classroom');
 const { StudentModel, StudentInformationModel } = require('../../mongodb/studentSchema');
+const { UserModel } = require('../../mongodb/user');
 
 
 //get all the information of a student(can be accessed by members of class)
@@ -108,5 +111,33 @@ Router.delete('/info',validate,status,async(req,res)=>{
         console.log(error);
         return res.sendStatus(500);
     }
-})
+});
+//leave a class as a student(can be done by the user who is student)
+//required headers [id,accesstoken,refreshtoken,classid]
+//uses [VALIDATE,STATUS] middleware(see those middleware for full info)
+Router.delete('/leave',validate,status,async(req,res)=>{
+    try {
+        const memeberId=req.user.id;
+        const classId=req.headers.classid;
+        if(!classId )return res.status(400).json('missing field(s) [classid]');
+        if(!req.status)return res.status(403).json('user is not a part of the class');
+        if(!req.status.student)return res.status(403).json('user is not a student');
+        const student=await StudentModel.findOne({id:memeberId,classId:classId});
+        if(!student)return res.status(404).json('student not found');
+        const assignments=await StudentAssignmentModel.find({studentId:memeberId,classId:classId});
+        const assignmentIds=assignments.map(a=>{
+            deleteFiles(a.files);
+            return a.assignmentId;
+        });
+        await AssignmentModel.updateMany({classId:classId,submittedStudent:{$in:memeberId}},{$pull:{submittedStudent:memeberId}})
+        await StudentModel.findOneAndDelete({id:memeberId,classId:classId});
+        await StudentAssignmentModel.deleteMany({studentId:memeberId,classId:classId});
+        await ClassModel.findOneAndUpdate({id:classId},{$pull:{students:memeberId}});
+        await UserModel.findOneAndUpdate({id:memeberId},{$pull:{classes:classId}});
+        res.status(200).json({accesstoken:req.accesstoken});
+    } catch (error) {
+        console.log(error);
+        return res.sendStatus(500);
+    }
+});
 module.exports=Router;

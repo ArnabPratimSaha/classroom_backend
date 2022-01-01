@@ -6,7 +6,7 @@ const inviteSchema = new mongoose.Schema({
         id: { type: String, required: true, default: () => uuidv4() },
         type: { type: String, enum: ['teacher', 'student'], required: true },
         show: { type: Boolean, default: false },
-        expireIn: {type:Date ,required:true,default:()=>new Date().setDate(new Date().getDate()+365)}
+        expireIn: {type:Date ,required:true,default:()=>new Date().setDate(new Date().getDate()+1)}
     }]
 });
 const InviteModel = mongoose.model('Invite', inviteSchema);
