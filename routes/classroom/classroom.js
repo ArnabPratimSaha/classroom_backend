@@ -10,6 +10,7 @@ const { AssignmentModel, StudentAssignmentModel } = require("../../mongodb/assig
 const fs=require('fs');
 const { StudentModel, StudentInformationModel } = require("../../mongodb/studentSchema");
 const { TeacherModel } = require("../../mongodb/teacherSchema");
+const { deleteFiles } = require("../../functions/deleteFiles");
 
 //create a classroom by an user
 //required headers [id,accesstoken,refreshtoken]
@@ -174,6 +175,29 @@ Router.delete('/kick', validate, admin, async (req, res) => {
         res.sendStatus(500);
     }
 })
-
-
+//delete a classroom (can only be done by an admin of the class)
+//required headers [id,accesstoken,refreshtoken,classid]
+//uses [VALIDATE,ADMIN] middleware(see those middleware for full info)
+Router.delete('/',validate,admin,async(req,res)=>{ 
+    try {
+        const classId=req.headers.classid;
+        const studentAssignments=await StudentAssignmentModel.find({classId:classId});
+        studentAssignments.forEach(a=>{
+            deleteFiles(a.files)
+        });
+        const classData=await ClassModel.findOne({id:classId});
+        const users=[...classData.teachers,...classData.students];
+        await UserModel.updateMany({id:{$in:users}},{$pull:{classes:classId}});
+        await ClassModel.findOneAndDelete({id:classId});
+        await StudentAssignmentModel.deleteMany({classId:classId});
+        await TeacherModel.deleteMany({classId:classId});
+        await AssignmentModel.deleteMany({classId:classId});
+        await InviteModel.findOneAndDelete({classId:classId});
+        await StudentModel.deleteMany({classId:classId});
+        res.status(200).json({accesstoken:req.accesstoken});
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+})
 module.exports = Router;

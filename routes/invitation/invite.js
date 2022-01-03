@@ -3,7 +3,8 @@ const { admin, status } = require("../../middleware/role");
 const { validate } = require("../../middleware/validation");
 const { ClassModel } = require("../../mongodb/classroom");
 const { InviteModel } = require("../../mongodb/invitelink");
-
+const { StudentModel, StudentInformationModel } = require('../../mongodb/studentSchema');
+const { v4: uuidv4 } = require('uuid');
 //create an invite link-can only be created by an admin
 //required headers [id,accesstoken,refreshtoken,expi(default 1 day),type(default student)]
 //uses [VALIDATE,ADMIN] middleware(see those middleware for full info)
@@ -41,14 +42,13 @@ Router.put('/link', validate, admin, async (req, res) => {
     }
 });
 //see the information about an invite link-can only be seen by someone  not in the classroom
-//required headers [id,accesstoken,refreshtoken]
-//required body [inviteid] 
+//required headers [id,accesstoken,refreshtoken,inviteid]
 //uses [VALIDATE,STATUS] middleware(see those middleware for full info)
 Router.get('/link', validate, status, async (req, res) => {
     try {
         if (req.status) return res.status(409).json('user is aleady part of the class');
         const classId = req.headers.classid;
-        const inviteId = req.body.inviteid;
+        const inviteId = req.headers.inviteid;
         const invite = await InviteModel.findOne({ classId: classId });
         if (!invite) return res.status(404).json('invite not found');
         const inviteData = invite.inviteIds.find(e => e.id === inviteId)
