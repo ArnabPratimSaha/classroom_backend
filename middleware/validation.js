@@ -5,6 +5,9 @@ const { UserModel } = require('../mongodb/user');
 //required headers [id,accesstoken,refreshtoken]
 //adds [user,accesstoken,refreshtoken] to req(accessed as req.user from next middleware)
 const validate = async (req, res, next) => {
+
+    console.log('coming');
+
     try {
         if(!req.headers.accesstoken|| !req.headers.refreshtoken ||!req.headers.id)return res.status(400).json('missing fields either [accesstoken,id,refreshtoken]')
         const accesstoken = req.headers.accesstoken;

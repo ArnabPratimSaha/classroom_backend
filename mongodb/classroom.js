@@ -1,5 +1,7 @@
 const mongoose=require('mongoose');
 const { userSchema } = require('./user');
+
+
 const inforamtionSchema=new mongoose.Schema({
     name:{type:String,required:true},
     value:{type:String,required:true},
@@ -11,15 +13,21 @@ const teacherSchema=new mongoose.Schema({
     role:{type:String,enum:['admin','basic'],default:'basic'},
     information:{type:Array,default:()=>[]}
 })
+
+
 const studentSchema=new mongoose.Schema({
     id:{ type:String,required:true },
     topInfo:{type:Object,default:()=>new Object()},
     information:{type:Array,default:()=>[]}
 })
+
+
 const fieldSchema=new mongoose.Schema({
     name:{type:String,required:true},
     priority:{type:Number,required:true,default:()=>-1}  
 })
+
+
 const classSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     name: { type: String, required: true },

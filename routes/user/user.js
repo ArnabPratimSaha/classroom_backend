@@ -8,6 +8,8 @@ const Router = require("express").Router();
 //required headers [id,accesstoken,refreshtoken,q(if empty then returns every info,keywords = 'email name id avatar')]
 //used [VALIDATE] middleware(see those middleware for full info)
 Router.get('/info', validate, async (req, res) => {
+
+    
     try {
         var user = req.user;
         var query = (req.headers.q||'').split(' ');

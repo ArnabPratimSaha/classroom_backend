@@ -6,10 +6,13 @@ const { admin, status } = require('../../middleware/role');
 const { InviteModel } = require("../../mongodb/invitelink");
 const { UserModel } = require("../../mongodb/user");
 const { classView } = require("../../middleware/classinfo");
+
+
 //create a classroom by an user
 //required headers [id,accesstoken,refreshtoken]
 //required body [name,description(not required),fields(not required)]
 //uses [VALIDATE] middleware(see those middleware for full info)
+
 Router.post('/create', validate, async (req, res) => {
     try {
         const user = req.user;
