@@ -20,7 +20,7 @@ const upload = multer({
         },
         filename: (req, file, cb) => {
             const ext = MIMETYPE.get(file.mimetype);
-            cb(null, uuidv4() + '.' + ext)
+            cb(null,file.originalname)
         },
     }),
     limits: {
@@ -48,4 +48,4 @@ const fileHandler = (req, res, next) => {
         return next();
     })
 }
-module.exports = { fileHandler }
+module.exports = { fileHandler ,MIMETYPE}
