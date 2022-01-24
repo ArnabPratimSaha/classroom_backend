@@ -1,5 +1,8 @@
 
 const { ClassModel } = require("../mongodb/classroom");
+const { StudentModel } = require("../mongodb/studentSchema");
+const { TeacherModel } = require("../mongodb/teacherSchema");
+
 //this validates if the user is an admin of a class or not
 //THIS NEEDS [VALIDATE] MIDDLEWARE TO EXECUTE FIRST
 //required headers [id,accesstoken,refreshtoken,classid]
@@ -9,9 +12,8 @@ const admin = async (req, res, next) => {
         if(!req.headers.classid)return res.status(400).json('missing header classid');
         const data = await ClassModel.findOne({ id: req.headers.classid });
         if (!data) return res.status(404).json('class not found');
-        if (data.teachers.find(e=>e.id===req.user.id) && data.teachers.find(e => e.role === 'admin')) {
-            //admin role
-            req.class=data;
+        const teacher=await TeacherModel.findOne({id:req.user.id,classId:data.id});
+        if(teacher && teacher.role==="admin"){
             next();
             return;
         }
@@ -35,17 +37,22 @@ const status=async (req, res, next) => {
         const data = await ClassModel.findOne({ id: req.headers.classid });
         if (!data) return res.status(404).json('class not found');
         const status={};
-        if (data.teachers.find(e => e.id === req.user.id)) {
+        if (data.teachers.find(e => e === req.user.id)) {
             //teacher
             status.teacher = true;
-            if (data.teachers.find(e => e.role === 'admin'))
-                status.admin = true;
+            const teacher=await TeacherModel.findOne({id:req.user.id,classId:data.id});
+            if(teacher.role==='admin') status.admin = true;
             req.status = status;
+            next();
+            return;
         }
-        if(data.students.find(e => e.id === req.user.id)){
+        if(data.students.find(e => e === req.user.id)){
             status.student = true;
             req.status = status;
+            next();
+            return;
         }
+        req.status=undefined;
         next();
         return;
     } catch (error) {

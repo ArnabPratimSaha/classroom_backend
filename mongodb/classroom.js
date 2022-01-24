@@ -31,19 +31,20 @@ const fieldSchema=new mongoose.Schema({
 const classSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     name: { type: String, required: true },
-    createdAt : {type:Date,default:()=>new Date()},
-    description: {type:String},
-    teachers :  {type:Array,required:true,default:()=>[],maxlength:200},
-    students : {type:Array,required:true,default:()=>[],maxlength:200},
-    requiredFields:{type:Array,required:true,default:()=>[],maxlength:20},
-    totalMemberCount:{type:Number,default:()=>1,required:true},
-    shadow:{type:Boolean,default:false},
-    information:{type:Map,default:()=>new Map()}
+    createdAt: { type: Date, default: () => new Date() },
+    description: { type: String },
+    teachers: { type: Array, required: true, default: () => [], maxlength: 200 },
+    students: { type: Array, required: true, default: () => [], maxlength: 200 },
+    requiredFields: { type: Array, required: true, default: () => [], maxlength: 20 },
+    totalMemberCount: { type: Number, default: () => 1, required: true },
+    shadow: { type: Boolean, default: false },
+    information: { type: Map, default: () => new Map() },
+    time: { from: { type: Date }, to: { type: Date } },
+    assignments: { type: Array, default: [] }
 });
 
-const ClassModel = mongoose.model('Class', classSchema);
-const TeacherModel= mongoose.model('Teacher', teacherSchema);
-const StudentModel= mongoose.model('Student', studentSchema);
-const MemberInformationModel=mongoose.model('MemberInformation', inforamtionSchema);
+
+
 const FieldModel=mongoose.model('Field', fieldSchema);
-module.exports={ClassModel,TeacherModel,StudentModel,FieldModel,MemberInformationModel};
+const ClassModel = mongoose.model('Class', classSchema);
+module.exports={ClassModel,FieldModel};
