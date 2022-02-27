@@ -12,7 +12,8 @@ const uploadFiles=async(files=[])=>{
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             const cloudFile = await cloudinary.uploader.upload(file.path,{
-                resource_type:'auto'
+                resource_type:'auto',
+                use_filename:true
             });
             uploadedFiles.push(cloudFile);
             fs.unlink(file.path, err => { if (err) console.log(err); })

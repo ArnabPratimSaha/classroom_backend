@@ -10,4 +10,13 @@ const deleteFiles=(files)=>{
         return;
     }
 }
+const renameFiles=(files)=>{
+    try {
+        files.forEach(file => {
+            // fs.rename(file.path)
+        });
+    } catch (error) {
+        
+    }
+}
 module.exports={deleteFiles};

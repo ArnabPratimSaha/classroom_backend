@@ -8,7 +8,7 @@ const { fileHandler } = require('../../middleware/filehandler');
 const fs = require('fs');
 const { StudentModel } = require('../../mongodb/studentSchema');
 const { TeacherModel } = require('../../mongodb/teacherSchema');
-const { deleteFiles } = require('../../functions/deleteFiles');
+const { deleteFiles } = require('../../functions/handleFile');
 const { uploadFiles, manageFile, destroyFiles, downloadFiles } = require('../../functions/cloudinary');
 
 
