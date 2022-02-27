@@ -35,6 +35,8 @@ const assignment=require('./routes/assignement/assignment');
 const student=require('./routes/student/student');
 const teacher=require('./routes/teacher/teacher');
 const invite=require('./routes/invitation/invite');
+const errorHandler=require('./middleware/errorHandler');
+
 app.use('/auth', auth);
 app.use('/class', classroom);
 app.use('/user', user);
@@ -42,6 +44,8 @@ app.use('/assignment',assignment);
 app.use('/student',student);
 app.use('/teacher',teacher)
 app.use('/invite',invite);
+app.use(errorHandler);
+
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
 })
