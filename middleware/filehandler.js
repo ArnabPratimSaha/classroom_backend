@@ -2,6 +2,8 @@
 const { MulterError } = require('multer');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
+const { Error } = require('../classes/error');
+
 const MIMETYPE = new Map([
     ['image/jpg', 'jpg'],
     ['image/png', 'png'],
@@ -20,7 +22,7 @@ const upload = multer({
         },
         filename: (req, file, cb) => {
             const ext = MIMETYPE.get(file.mimetype);
-            cb(null,file.originalname)
+            cb(null,file.originalname.split('.')[0]+'['+uuidv4()+']'+ext)
         },
     }),
     limits: {
@@ -42,10 +44,10 @@ const fileHandler = (req, res, next) => {
     const multerUpload = upload.array('files', 10);
     multerUpload(req, res, (err) => {
         if (err) {
-            return res.status(404).json(err.message);
+            return next(new Error(404,err.message));
         }
         // Everything went fine. 
         return next();
     })
 }
-module.exports = { fileHandler ,MIMETYPE}
+module.exports = { fileHandler ,MIMETYPE,upload}

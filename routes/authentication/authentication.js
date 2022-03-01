@@ -14,7 +14,7 @@ Router.get('/callback',passport.authenticate('google', { failureRedirect: '/logi
         const refreshtoken=jwt.sign({ id: user.id }, process.env.SECRET,{expiresIn:'1y'});
         user.refreshtoken.push(refreshtoken);
         await user.save();
-        return res.redirect(`http://localhost:3000/auth?id=${user.id}&accessToken=${accesstoken}&refreshToken=${refreshtoken}`);
+        return res.redirect(`${process.env.FRONTEND}/auth/${user.id}/${accesstoken}/${refreshtoken}`);
       }
       const newUser=new UserModel({
         id:uuidv4(),
@@ -28,7 +28,7 @@ Router.get('/callback',passport.authenticate('google', { failureRedirect: '/logi
       const refreshtoken=jwt.sign({ id: response.id }, process.env.SECRET,{expiresIn:'1y'});
       response.refreshtoken.push(refreshtoken);
       await response.save();
-      return res.redirect(`${process.env.FRONTEND}?id=${response.id}&accessToken=${accesstoken}&refreshToken=${refreshtoken}`);
+      return res.redirect(`${process.env.FRONTEND}/auth/${response.id}/${accesstoken}/${refreshtoken}`);
   } catch (error) {
     console.error(error);
     res.sendStatus(500);

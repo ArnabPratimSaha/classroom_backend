@@ -31,6 +31,7 @@ const fieldSchema=new mongoose.Schema({
 const classSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     name: { type: String, required: true },
+    avatar:{ type:Object },
     createdAt: { type: Date, default: () => new Date() },
     description: { type: String },
     teachers: { type: Array, required: true, default: () => [], maxlength: 200 },

@@ -1,5 +1,5 @@
 const Router=require('express').Router();
-const { deleteFiles } = require('../../functions/deleteFiles');
+const { deleteFiles } = require('../../functions/handleFile');
 const { status } = require('../../middleware/role');
 const { validate } = require('../../middleware/validation');
 const { StudentAssignmentModel, AssignmentModel } = require('../../mongodb/assignment');
