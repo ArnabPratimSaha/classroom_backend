@@ -31,14 +31,15 @@ Router.get('/info', validate, async (req, res, next) => {
     }
 });
 //get all the info of the classed of the user
-//required headers [id,accesstoken,refreshtoken,q(if empty then returns every info,keywords = 'email name id avatar')]
+//required headers [id,accesstoken,refreshtoken]
+//required query [limit,page,query(optional)]
 //used [VALIDATE] middleware(see those middleware for full info)
 Router.get('/classes', validate, async (req, res, next) => {
     try {
         const user = await UserModel.findOne({ id: req.user.id });
         const limit=+req.query.limit;
         const pageIndex = +req.query.page;
-        if (!limit || !pageIndex) return next(new Error(400, 'missing query(s) [limit,pageIndex]'));
+        if (!limit || !pageIndex) return next(new Error(400, 'missing query(s) [limit,page]'));
         const query = req.query.query ? req.query.query.toString().trim() : '';
         const startIndex = (pageIndex - 1) * limit;
         const classIds = user.classes || [];
