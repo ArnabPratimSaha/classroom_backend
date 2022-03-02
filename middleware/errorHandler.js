@@ -8,8 +8,10 @@ const errorHandler = (err, req, res, next) => {
     }
     if(err instanceof Error){
         console.log(err.message);
-        return res.status(err.status||500).json(err.message||'Unknow Error');
+        return res.status(err.status||500).json(err.message||'Unknown Error');
+    }else{
+        console.log(err);
+        return res.status(500).json('Unknown Error');
     }
-    return res.status(500).json('Unknow Error');
 }
 module.exports=errorHandler;
