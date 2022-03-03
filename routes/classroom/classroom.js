@@ -23,6 +23,9 @@ const { uploadFiles, manageFile, destroyFiles, downloadFiles } = require('../../
 //uses [VALIDATE,fileHandler] middleware(see those middleware for full info)
 Router.post('/create', validate, fileHandler, async (req, res, next) => {
     try {
+
+        console.log(req.body)
+
         const user = req.user;
         const name = req.body.name;
         if (!name) return next(new Error(400, 'missing field(s) [name]'));
