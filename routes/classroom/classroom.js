@@ -18,9 +18,14 @@ const { uploadFiles, manageFile, destroyFiles, downloadFiles } = require('../../
 //create a classroom by an user
 //required headers [id,accesstoken,refreshtoken]
 //required body [name,description(not required),fields(not required)]
+//uses [VALIDATE] middleware(see those middleware for full info)
+
 //uses [VALIDATE,fileHandler] middleware(see those middleware for full info)
 Router.post('/create', validate, fileHandler, async (req, res, next) => {
     try {
+
+        console.log(req.body)
+
         const user = req.user;
         const name = req.body.name;
         if (!name) return next(new Error(400, 'missing field(s) [name]'));
@@ -69,13 +74,20 @@ Router.post('/create', validate, fileHandler, async (req, res, next) => {
 });
 
 
+
 //get information of a classroom by an user (if the user is in the classroom)
 //required headers [id,accesstoken,refreshtoken,classid,q]
 //uses [VALIDATE,STATUS] middleware(see those middleware for full info)
-Router.get('/info', validate, status, classView, async (req, res) => {
+Router.get('/info', validate, status, async (req, res) => {
     try {
-        if (!req.headers.q) return res.status(200).json(req.view);
-        res.status(200).json({ ...view, accesstoken: req.accesstoken });
+        if(req.status === undefined) return res.status(403).json('user is not in the class');
+        if(!req.headers.classid) return res.status(403).json('missing class id')
+
+        const classData = await ClassModel.findOne({id : req.headers.classid});
+        if(!classData) return res.sendStatus(403).json('class not found');
+
+        return res.status(200).json({classData});
+
     } catch (error) {
         console.log(error);
         return next(new Error(500, 'Server Error'));
