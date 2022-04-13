@@ -10,7 +10,30 @@ const { StudentModel } = require('../../mongodb/studentSchema');
 const { TeacherModel } = require('../../mongodb/teacherSchema');
 const { deleteFiles } = require('../../functions/handleFile');
 const { uploadFiles, manageFile, destroyFiles, downloadFiles } = require('../../functions/cloudinary');
+const { Mongoose } = require('mongoose');
 
+// get all the assignments in a class
+// required headers [id , accesstoken , refreshtoken , classid]
+// validate checks for authentication
+// status checks if the user is in the class or not
+
+Router.get('/allassignments' , validate , status , async(req , res) => {
+    try {
+        
+        if(req.status === undefined) return res.status(403).json('user is not in the class');
+        if(!req.headers.classid) return res.status(403).json('missing class id')
+
+        const allAssignments = await AssignmentModel.find({classId : req.headers.classid});
+
+        return res.status(200).json({
+            assignments : allAssignments
+        })
+
+    } catch (error) {
+        console.log({error});
+        return res.sendStatus(500);
+    }
+})
 
 //create assignment by teacher
 //required headers [id,accesstoken,refreshtoken,classid]
